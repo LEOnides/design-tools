@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Leaders · Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font: 'Fira Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --bg:        #EEECEA;
+  --surface:   #FFFFFF;
+  --surface2:  #F4F3EF;
+  --surface3:  #EBEAE6;
+  --text-1:    #1A1A1A;
+  --text-2:    #5C5C5C;
+  --text-3:    #AAAAAA;
+  --border:    rgba(0,0,0,0.07);
+  --red:       #E53E3E;
+  --green:     #22C55E;
+  --amber:     #F59E0B;
+  --face-bg:   #FFFFFF;
+  --face-str:  #E8E8E8;
+  --num-col:   #2D2D2D;   /* high contrast clock numbers */
+  --tick-maj:  #9A9A9A;
+  --tick-min:  #D4D4D4;
+  --knob-f:    #FFFFFF;
+  --knob-s:    #DDDDDD;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.07), 0 12px 32px rgba(0,0,0,0.06);
+  --shadow-btn:  0 4px 16px rgba(229,62,62,0.38);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:       #141416;
+    --surface:  #1C1C1E;
+    --surface2: #242426;
+    --surface3: #2A2A2C;
+    --text-1:   #F0EFEA;
+    --text-2:   #888888;
+    --text-3:   #555555;
+    --border:   rgba(255,255,255,0.07);
+    --face-bg:  #232328;
+    --face-str: #333336;
+    --num-col:  #CCCCCC;
+    --tick-maj: #666668;
+    --tick-min: #3A3A3C;
+    --knob-f:   #2A2A2E;
+    --knob-s:   #444448;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
+  }
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-1);
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 36px 16px 80px;
+}
+
+.app {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ─── App header ─── */
+.app-hd {
+  text-align: center;
+  padding-bottom: 6px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: var(--surface);
+  border-radius: 22px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ─── Timer card ─── */
+.t-card {
+  padding: 28px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.face-wrap {
+  position: relative;
+  width: 288px;
+  height: 288px;
+  flex-shrink: 0;
+}
+
+#timerSvg { width: 100%; height: 100%; display: block; }
+
+/* SVG element theming via CSS */
+#faceBg    { fill: var(--face-bg); stroke: var(--face-str); }
+#timerArc  { fill: var(--red); }
+#knobOuter { fill: var(--knob-f); stroke: var(--knob-s); }
+#knobDot   { fill: var(--tick-maj); }
+
+.face-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 0;
+}
+
+.act-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--red);
+  min-height: 14px;
+  text-align: center;
+  max-width: 140px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.act-label.show { opacity: 1; }
+
+.t-num {
+  font-size: 54px;
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-1);
+  margin-top: 2px;
+}
+
+.t-status {
+  margin-top: 5px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  transition: color 0.2s;
+  text-align: center;
+  min-height: 14px;
+}
+
+/* ─── Mode toggle ─── */
+.mode-toggle {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 100px;
+  padding: 3px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 7px 12px;
+  border-radius: 100px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.mode-btn.on {
+  background: var(--surface);
+  color: var(--text-1);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* ─── Panel cards ─── */
+.p-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Presets ─── */
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.preset {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 5px 13px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.1s;
+  -webkit-user-select: none; user-select: none;
+}
+.preset:hover { color: var(--text-1); background: var(--surface3); }
+.preset.on { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ─── Custom row ─── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.row label, .row .unit {
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+input[type="number"] {
+  width: 54px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 5px 6px;
+  outline: none;
+  -moz-appearance: textfield; appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+input[type="number"]:focus { border-color: var(--red); }
+
+input[type="text"] {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text-1);
+  font-family: var(--font);
+  font-size: 14px;
+  padding: 7px 10px;
+  outline: none;
+}
+input[type="text"]::placeholder { color: var(--text-3); }
+input[type="text"]:focus { border-color: var(--red); }
+
+.btn-sm {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.1s;
+  white-space: nowrap;
+}
+.btn-sm:hover { color: var(--text-1); background: var(--surface3); }
+
+/* ─── Controls (libre) ─── */
+.controls { display: flex; align-items: center; gap: 14px; }
+
+.c-btn {
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  color: var(--text-2);
+  transition: all 0.12s;
+}
+.c-btn:hover { color: var(--text-1); background: var(--surface3); }
+.c-btn:active { transform: scale(0.95); }
+
+.c-btn.sm { width: 40px; height: 40px; }
+.c-btn.sm svg { width: 16px; height: 16px; }
+
+.c-btn.play {
+  width: 64px; height: 64px;
+  background: var(--red) !important;
+  border-color: var(--red) !important;
+  color: #fff !important;
+  box-shadow: var(--shadow-btn);
+}
+.c-btn.play svg { width: 22px; height: 22px; }
+.c-btn.play:hover {
+  transform: scale(1.06) !important;
+  box-shadow: 0 6px 22px rgba(229,62,62,0.5) !important;
+}
+
+/* ─── Schedule (minuto a minuto) ─── */
+.seq-add {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+}
+.seq-add input[type="number"] { width: 52px; }
+.btn-add {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: var(--red);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.12s;
+}
+.btn-add:hover { transform: scale(1.08); }
+
+.seq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.seq-empty {
+  text-align: center;
+  padding: 20px 0 8px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.seq-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border-left: 3px solid transparent;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s;
+}
+.seq-item:hover .seq-del { opacity: 1; }
+
+.seq-item.active {
+  background: rgba(229,62,62,0.07);
+  border-left-color: var(--red);
+}
+.seq-item.done {
+  opacity: 0.55;
+}
+
+.seq-icon {
+  width: 20px; height: 20px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Status icons inline SVG */
+.ico-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-3);
+  display: inline-block;
+}
+.seq-item.done .ico-dot { background: var(--green); }
+.seq-item.active .ico-dot { background: var(--red); }
+
+.seq-body { flex: 1; min-width: 0; }
+.seq-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seq-item.done .seq-name { text-decoration: line-through; color: var(--text-3); }
+.seq-meta {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 1px;
+}
+.seq-item.active .seq-meta { color: var(--red); font-weight: 500; }
+
+.seq-del {
+  background: none; border: none;
+  color: var(--text-3); font-size: 11px;
+  cursor: pointer; padding: 4px 5px;
+  border-radius: 4px; opacity: 0;
+  transition: all 0.1s; flex-shrink: 0;
+  font-family: var(--font);
+}
+.seq-del:hover { color: var(--red); background: rgba(229,62,62,0.1); }
+
+.seq-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+  margin-top: 2px;
+}
+.seq-total {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+.seq-controls {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-seq {
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  border-radius: 100px;
+  padding: 7px 16px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-2);
+  display: flex; align-items: center; gap: 5px;
+  transition: all 0.12s;
+  white-space: nowrap;
+}
+.btn-seq:hover { color: var(--text-1); background: var(--surface3); }
+.btn-seq.primary { background: var(--red); border-color: var(--red); color: #fff; }
+.btn-seq.primary:hover { transform: scale(1.03); filter: brightness(1.06); }
+.btn-seq.ghost { background: none; border-color: transparent; color: var(--text-3); padding: 7px 10px; }
+.btn-seq.ghost:hover { color: var(--red); background: rgba(229,62,62,0.08); }
+
+.seq-done-msg {
+  text-align: center;
+  padding: 8px 0;
+}
+.seq-done-msg strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+.seq-done-msg span { font-size: 12px; color: var(--text-3); }
+
+/* ─── Session log ─── */
+.log-card { padding: 18px 20px 20px; }
+
+.log-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px;
+}
+.log-head h2 {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--text-3); font-family: var(--font);
+}
+.log-sum { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+
+.log-empty {
+  text-align: center; padding: 14px 0 6px;
+  font-size: 12px; color: var(--text-3);
+}
+
+.log-list { display: flex; flex-direction: column; gap: 5px; }
+
+.log-entry {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--surface2);
+  animation: fadeUp 0.18s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.log-entry:hover .log-del { opacity: 1; }
+
+.log-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.log-dot.completed { background: var(--green); }
+.log-dot.stopped   { background: var(--amber); }
+
+.log-body { flex: 1; }
+.log-dur  { font-size: 13px; font-weight: 500; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.log-meta { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+
+.log-del {
+  background: none; border: none;
+  color: var(--text-3); font-size: 11px;
+  cursor: pointer; padding: 3px 5px;
+  border-radius: 4px; opacity: 0;
+  transition: all 0.1s; font-family: var(--font);
+}
+.log-del:hover { color: var(--red); background: rgba(229,62,62,0.1); }
+
+.log-footer {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: none; justify-content: flex-end;
+}
+.log-footer.show { display: flex; }
+.btn-clear {
+  background: none; border: none;
+  font-size: 11px; color: var(--text-3);
+  cursor: pointer; transition: color 0.1s;
+  font-family: var(--font);
+}
+.btn-clear:hover { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="app-hd">Design Leaders · Timer</div>
+
+  <!-- ── Timer face (shared) ── -->
+  <div class="card t-card">
+    <div class="face-wrap">
+      <svg id="timerSvg" viewBox="0 0 288 288" xmlns="http://www.w3.org/2000/svg">
+        <circle id="faceBg" cx="144" cy="144" r="140" stroke-width="1.5"/>
+        <path id="timerArc" d=""/>
+        <g id="ticks"></g>
+        <circle id="knobOuter" cx="144" cy="144" r="11" stroke-width="1.5"/>
+        <circle id="knobDot"   cx="144" cy="144" r="3.5"/>
+      </svg>
+      <div class="face-center">
+        <div class="act-label" id="actLabel"></div>
+        <div class="t-num"    id="display">25:00</div>
+        <div class="t-status" id="statusLbl">listo</div>
+      </div>
+    </div>
+
+    <!-- Mode toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn on" id="btnLibre"    onclick="setMode('libre')">Timer libre</button>
+      <button class="mode-btn"    id="btnSecuencia" onclick="setMode('secuencia')">Minuto a minuto</button>
+    </div>
+  </div>
+
+  <!-- ── Panel: Timer libre ── -->
+  <div id="panelLibre" class="card p-card">
+    <div class="presets" id="presets">
+      <button class="preset" onclick="setTime(5)">5 min</button>
+      <button class="preset" onclick="setTime(10)">10 min</button>
+      <button class="preset" onclick="setTime(15)">15 min</button>
+      <button class="preset on"  onclick="setTime(25)">25 min</button>
+      <button class="preset" onclick="setTime(30)">30 min</button>
+      <button class="preset" onclick="setTime(45)">45 min</button>
+      <button class="preset" onclick="setTime(60)">60 min</button>
+    </div>
+
+    <div class="row">
+      <label for="cmin">Personalizar:</label>
+      <input type="number" id="cmin" value="25" min="1" max="120">
+      <span class="unit">min</span>
+      <button class="btn-sm" onclick="applyCustom()">Aplicar</button>
+    </div>
+
+    <div class="controls">
+      <button class="c-btn sm" onclick="resetTimer()" title="Reiniciar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+      <button class="c-btn play" id="playBtn" onclick="togglePlay()">
+        <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+      <button class="c-btn sm" onclick="saveManual()" title="Guardar en sesión">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Panel: Minuto a minuto ── -->
+  <div id="panelSeq" class="card p-card" style="display:none">
+
+    <!-- Add form -->
+    <div class="seq-add">
+      <input type="text"   id="actName" placeholder="Nombre de la actividad" maxlength="40">
+      <input type="number" id="actMins" value="5" min="1" max="120">
+      <span class="unit">min</span>
+      <button class="btn-add" onclick="addActivity()" title="Agregar actividad">+</button>
+    </div>
+
+    <!-- List -->
+    <div id="seqEmpty" class="seq-empty">Agrega actividades para armar el minuto a minuto</div>
+    <div id="seqList" class="seq-list"></div>
+
+    <!-- Footer: totals + controls -->
+    <div class="seq-footer" id="seqFooter" style="display:none">
+      <span class="seq-total" id="seqTotal">0 min total</span>
+      <div class="seq-controls" id="seqControls">
+        <!-- filled by renderSeqControls() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Session log ── -->
+  <div class="card log-card">
+    <div class="log-head">
+      <h2>Sesión de hoy</h2>
+      <span class="log-sum" id="logSum">0 min total</span>
+    </div>
+    <div id="logEmpty" class="log-empty">Sin tiempos guardados aún</div>
+    <div id="logList" class="log-list"></div>
+    <div id="logFooter" class="log-footer">
+      <button class="btn-clear" onclick="clearLog()">Limpiar sesión</button>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  SVG Constants
+// ══════════════════════════════════════════════════════════
+const CX = 144, CY = 144;
+const ARC_R      = 126;
+const TICK_OUT   = 138;
+const TICK_MAJ_I = 122;  // major tick inner
+const TICK_MIN_I = 131;  // minor tick inner
+const NUM_R      = 103;  // number label radius
+
+// ══════════════════════════════════════════════════════════
+//  Timer state
+// ══════════════════════════════════════════════════════════
+let mode      = 'libre';
+let total     = 25 * 60;
+let remaining = 25 * 60;
+let running   = false;
+let ticker    = null;
+
+// ══════════════════════════════════════════════════════════
+//  Sequence state
+// ══════════════════════════════════════════════════════════
+let schedule  = [];        // [{id, name, mins}]
+let seqState  = 'idle';    // idle | running | paused | done
+let seqIdx    = -1;
+
+// ══════════════════════════════════════════════════════════
+//  Session log
+// ══════════════════════════════════════════════════════════
+let logEntries = [];
+
+// ══════════════════════════════════════════════════════════
+//  SVG: Arc path
+// ══════════════════════════════════════════════════════════
+function arcPath(rem, tot) {
+  if (rem <= 0 || tot <= 0) return '';
+  const ratio = Math.min(rem / tot, 1);
+  const R = ARC_R;
+  if (ratio >= 0.9999) {
+    return `M ${CX} ${CY-R} A ${R} ${R} 0 1 1 ${CX} ${CY+R} A ${R} ${R} 0 1 1 ${CX} ${CY-R} Z`;
+  }
+  const a = ratio * 2 * Math.PI;
+  const sa = -Math.PI / 2;
+  const ea = sa + a;
+  const x1 = +(CX + R * Math.cos(sa)).toFixed(4);
+  const y1 = +(CY + R * Math.sin(sa)).toFixed(4);
+  const x2 = +(CX + R * Math.cos(ea)).toFixed(4);
+  const y2 = +(CY + R * Math.sin(ea)).toFixed(4);
+  return `M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${ratio > 0.5 ? 1 : 0} 1 ${x2} ${y2} Z`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  SVG: Build tick marks + numbers
+// ══════════════════════════════════════════════════════════
+function buildTicks() {
+  const g = document.getElementById('ticks');
+  g.innerHTML = '';
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // Tick lines (60 total)
+  for (let i = 0; i < 60; i++) {
+    const ang = (i / 60) * 2 * Math.PI - Math.PI / 2;
+    const major = i % 5 === 0;
+    const innerR = major ? TICK_MAJ_I : TICK_MIN_I;
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', (CX + TICK_OUT * Math.cos(ang)).toFixed(3));
+    ln.setAttribute('y1', (CY + TICK_OUT * Math.sin(ang)).toFixed(3));
+    ln.setAttribute('x2', (CX + innerR * Math.cos(ang)).toFixed(3));
+    ln.setAttribute('y2', (CY + innerR * Math.sin(ang)).toFixed(3));
+    ln.style.stroke = `var(${major ? '--tick-maj' : '--tick-min'})`;
+    ln.setAttribute('stroke-width', major ? '2' : '1');
+    ln.setAttribute('stroke-linecap', 'round');
+    g.appendChild(ln);
+  }
+
+  // Number labels at every 5 minutes
+  [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55].forEach(n => {
+    const ang = (n / 60) * 2 * Math.PI - Math.PI / 2;
+    const tx = +(CX + NUM_R * Math.cos(ang)).toFixed(3);
+    const ty = +(CY + NUM_R * Math.sin(ang)).toFixed(3);
+    const txt = document.createElementNS(NS, 'text');
+    txt.setAttribute('x', tx);
+    txt.setAttribute('y', ty);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dominant-baseline', 'middle');
+    txt.setAttribute('font-family', "'Fira Sans', -apple-system, sans-serif");
+    txt.setAttribute('font-size', '16');
+    txt.setAttribute('font-weight', n === 0 ? '600' : '500');
+    txt.style.fill = 'var(--num-col)';
+    txt.textContent = n.toString();
+    g.appendChild(txt);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+//  Helpers
+// ══════════════════════════════════════════════════════════
+function fmt(s) {
+  return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+}
+
+function fmtMins(secs) {
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  return s ? `${m}:${s.toString().padStart(2,'0')} min` : `${m} min`;
+}
+
+// ══════════════════════════════════════════════════════════
+//  Render face
+// ══════════════════════════════════════════════════════════
+function render() {
+  document.getElementById('display').textContent = fmt(remaining);
+  document.getElementById('timerArc').setAttribute('d', arcPath(remaining, total));
+
+  const lbl = document.getElementById('statusLbl');
+  const act = document.getElementById('actLabel');
+
+  if (mode === 'libre') {
+    act.textContent = '';
+    act.classList.remove('show');
+    if (running) {
+      lbl.textContent = 'corriendo'; lbl.style.color = 'var(--red)';
+    } else if (remaining === 0) {
+      lbl.textContent = '¡tiempo!'; lbl.style.color = 'var(--green)';
+    } else if (remaining < total) {
+      lbl.textContent = 'pausado'; lbl.style.color = 'var(--amber)';
+    } else {
+      lbl.textContent = 'listo'; lbl.style.color = '';
+    }
+  } else {
+    // Secuencia mode
+    if (seqState === 'idle') {
+      act.textContent = ''; act.classList.remove('show');
+      lbl.textContent = schedule.length ? 'listo para iniciar' : 'agrega actividades';
+      lbl.style.color = '';
+    } else if (seqState === 'running' || seqState === 'paused') {
+      const item = schedule[seqIdx];
+      act.textContent = item ? item.name : '';
+      act.classList.toggle('show', !!item);
+      const n = seqIdx + 1, tot = schedule.length;
+      if (running) {
+        lbl.textContent = `actividad ${n} de ${tot}`; lbl.style.color = 'var(--red)';
+      } else {
+        lbl.textContent = `pausado · ${n} de ${tot}`; lbl.style.color = 'var(--amber)';
+      }
+    } else if (seqState === 'done') {
+      act.textContent = ''; act.classList.remove('show');
+      lbl.textContent = '¡sesión completa!'; lbl.style.color = 'var(--green)';
+    }
+  }
+}
+
+function setPlayIcon(playing) {
+  const svg = document.getElementById('playIcon');
+  if (playing) {
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2.5');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.innerHTML = '<rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>';
+  } else {
+    svg.setAttribute('fill', 'currentColor');
+    svg.removeAttribute('stroke'); svg.removeAttribute('stroke-width'); svg.removeAttribute('stroke-linecap');
+    svg.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  Timer core
+// ══════════════════════════════════════════════════════════
+function startClock() {
+  running = true;
+  setPlayIcon(true);
+  render();
+  ticker = setInterval(() => {
+    remaining--;
+    render();
+    if (remaining <= 0) onTimerEnd();
+  }, 1000);
+}
+
+function pauseClock() {
+  running = false;
+  clearInterval(ticker); ticker = null;
+  setPlayIcon(false);
+  render();
+}
+
+function stopClock() {
+  running = false;
+  clearInterval(ticker); ticker = null;
+  setPlayIcon(false);
+}
+
+function onTimerEnd() {
+  stopClock();
+  remaining = 0;
+  render();
+  if (mode === 'libre') {
+    addLog(total, 'completed');
+    beep();
+  } else {
+    // sequence: advance
+    seqAdvance();
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  Libre timer
+// ══════════════════════════════════════════════════════════
+function togglePlay() {
+  if (mode !== 'libre') return;
+  if (remaining <= 0) { resetTimer(); return; }
+  running ? pauseClock() : startClock();
+}
+
+function resetTimer() {
+  stopClock();
+  remaining = total;
+  render();
+}
+
+function setTime(mins) {
+  stopClock();
+  total = mins * 60; remaining = total;
+  document.getElementById('cmin').value = mins;
+  document.querySelectorAll('.preset').forEach(b =>
+    b.classList.toggle('on', b.textContent === `${mins} min`)
+  );
+  render();
+}
+
+function applyCustom() {
+  const v = parseInt(document.getElementById('cmin').value, 10);
+  if (v >= 1 && v <= 120) setTime(v);
+}
+
+function saveManual() {
+  const elapsed = total - remaining;
+  if (elapsed >= 5) addLog(elapsed, 'stopped');
+}
+
+// ══════════════════════════════════════════════════════════
+//  Sequence logic
+// ══════════════════════════════════════════════════════════
+function addActivity() {
+  const nameEl = document.getElementById('actName');
+  const minsEl = document.getElementById('actMins');
+  const name   = nameEl.value.trim();
+  const mins   = parseInt(minsEl.value, 10);
+  if (!name) { nameEl.focus(); return; }
+  if (!mins || mins < 1) { minsEl.focus(); return; }
+
+  schedule.push({ id: Date.now(), name, mins });
+  nameEl.value = '';
+  nameEl.focus();
+  renderSeq();
+}
+
+function deleteActivity(id) {
+  if (seqState !== 'idle') return;
+  schedule = schedule.filter(a => a.id !== id);
+  renderSeq();
+}
+
+function seqStart() {
+  if (!schedule.length) return;
+  seqIdx   = 0;
+  seqState = 'running';
+  total    = schedule[0].mins * 60;
+  remaining = total;
+  startClock();
+  renderSeq();
+}
+
+function seqPause() {
+  seqState = 'paused';
+  pauseClock();
+  renderSeq();
+}
+
+function seqResume() {
+  seqState = 'running';
+  startClock();
+  renderSeq();
+}
+
+function seqSkip() {
+  stopClock();
+  // Mark current as done in log
+  if (seqIdx >= 0 && seqIdx < schedule.length) {
+    const item = schedule[seqIdx];
+    const elapsed = item.mins * 60 - remaining;
+    if (elapsed > 5) addLog(elapsed, 'stopped', item.name);
+  }
+  seqAdvance(true);
+}
+
+function seqAdvance(skipped = false) {
+  // Log completed item
+  if (!skipped && seqIdx >= 0 && seqIdx < schedule.length) {
+    const item = schedule[seqIdx];
+    addLog(item.mins * 60, 'completed', item.name);
+  }
+
+  const next = seqIdx + 1;
+  if (next >= schedule.length) {
+    // All done
+    seqState = 'done';
+    seqIdx   = schedule.length; // past end
+    total    = 0; remaining = 0;
+    stopClock();
+    beepDone();
+    render();
+    renderSeq();
+    return;
+  }
+
+  seqIdx = next;
+  seqState = 'running';
+  total    = schedule[seqIdx].mins * 60;
+  remaining = total;
+  beepNext();
+  startClock();
+  renderSeq();
+}
+
+function seqReset() {
+  stopClock();
+  seqState  = 'idle';
+  seqIdx    = -1;
+  total     = schedule.length ? schedule[0].mins * 60 : 0;
+  remaining = total;
+  render();
+  renderSeq();
+}
+
+// ══════════════════════════════════════════════════════════
+//  Render: sequence panel
+// ══════════════════════════════════════════════════════════
+function renderSeq() {
+  const list   = document.getElementById('seqList');
+  const empty  = document.getElementById('seqEmpty');
+  const footer = document.getElementById('seqFooter');
+  const total  = document.getElementById('seqTotal');
+  const ctrls  = document.getElementById('seqControls');
+
+  if (!schedule.length) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    footer.style.display = 'none';
+    render();
+    return;
+  }
+
+  empty.style.display = 'none';
+  footer.style.display = 'flex';
+
+  // Total duration
+  const totalSecs = schedule.reduce((s, a) => s + a.mins * 60, 0);
+  total.textContent = fmtMins(totalSecs).replace(' min', ' min total');
+
+  // List items
+  const canEdit = seqState === 'idle';
+  list.innerHTML = schedule.map((item, i) => {
+    let cls = '';
+    let metaText = `${item.mins} min`;
+    if (seqState === 'done' || i < seqIdx) {
+      cls = 'done';
+      metaText = 'completado';
+    } else if (i === seqIdx && (seqState === 'running' || seqState === 'paused')) {
+      cls = 'active';
+      metaText = running ? 'en curso' : 'pausado';
+    }
+    const delBtn = canEdit
+      ? `<button class="seq-del" onclick="deleteActivity(${item.id})">✕</button>`
+      : '';
+    return `
+      <div class="seq-item ${cls}">
+        <div class="seq-icon"><span class="ico-dot"></span></div>
+        <div class="seq-body">
+          <div class="seq-name">${item.name}</div>
+          <div class="seq-meta">${metaText}</div>
+        </div>
+        ${delBtn}
+      </div>`;
+  }).join('');
+
+  // Controls
+  if (seqState === 'idle') {
+    ctrls.innerHTML = `<button class="btn-seq primary" onclick="seqStart()">▶ Iniciar sesión</button>`;
+  } else if (seqState === 'running') {
+    ctrls.innerHTML = `
+      <button class="btn-seq" onclick="seqPause()">⏸ Pausar</button>
+      <button class="btn-seq ghost" onclick="seqSkip()">⏭ Saltar</button>
+      <button class="btn-seq ghost" onclick="seqReset()">⏹</button>`;
+  } else if (seqState === 'paused') {
+    ctrls.innerHTML = `
+      <button class="btn-seq primary" onclick="seqResume()">▶ Continuar</button>
+      <button class="btn-seq ghost" onclick="seqSkip()">⏭ Saltar</button>
+      <button class="btn-seq ghost" onclick="seqReset()">⏹</button>`;
+  } else if (seqState === 'done') {
+    ctrls.innerHTML = `<button class="btn-seq" onclick="seqReset()">↺ Reiniciar sesión</button>`;
+  }
+
+  render();
+}
+
+// ══════════════════════════════════════════════════════════
+//  Mode switch
+// ══════════════════════════════════════════════════════════
+function setMode(m) {
+  if (mode === m) return;
+  // Pause whatever is running
+  if (running) pauseClock();
+  mode = m;
+  document.getElementById('btnLibre').classList.toggle('on', m === 'libre');
+  document.getElementById('btnSecuencia').classList.toggle('on', m === 'secuencia');
+  document.getElementById('panelLibre').style.display = m === 'libre' ? '' : 'none';
+  document.getElementById('panelSeq').style.display   = m === 'secuencia' ? '' : 'none';
+
+  if (m === 'libre') {
+    // Restore libre state
+    stopClock(); seqState = 'idle';
+    total = 25 * 60; remaining = 25 * 60;
+    setPlayIcon(false);
+  }
+  render();
+}
+
+// ══════════════════════════════════════════════════════════
+//  Session log
+// ══════════════════════════════════════════════════════════
+function addLog(secs, status, name = null) {
+  const now = new Date();
+  logEntries.unshift({
+    id: Date.now(), secs, status, name,
+    time: now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+  });
+  renderLog();
+}
+
+function deleteLog(id) {
+  logEntries = logEntries.filter(e => e.id !== id);
+  renderLog();
+}
+
+function clearLog() {
+  logEntries = [];
+  renderLog();
+}
+
+function renderLog() {
+  const list   = document.getElementById('logList');
+  const empty  = document.getElementById('logEmpty');
+  const sum    = document.getElementById('logSum');
+  const footer = document.getElementById('logFooter');
+
+  if (!logEntries.length) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    sum.textContent = '0 min total';
+    footer.classList.remove('show');
+    return;
+  }
+
+  empty.style.display = 'none';
+  footer.classList.add('show');
+  const totalMin = Math.round(logEntries.reduce((s, e) => s + e.secs, 0) / 60);
+  sum.textContent = `${totalMin} min total`;
+
+  list.innerHTML = logEntries.map(e => {
+    const label = e.status === 'completed' ? 'completado' : 'guardado';
+    const title = e.name ? `${e.name} · ${label}` : label;
+    return `<div class="log-entry">
+      <span class="log-dot ${e.status}"></span>
+      <div class="log-body">
+        <div class="log-dur">${fmtMins(e.secs)}</div>
+        <div class="log-meta">${e.time} · ${title}</div>
+      </div>
+      <button class="log-del" onclick="deleteLog(${e.id})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  Audio cues
+// ══════════════════════════════════════════════════════════
+function audioCtx() {
+  return new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function beep() {
+  try {
+    const ctx = audioCtx();
+    [0, 0.28, 0.56].forEach(t => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880; o.type = 'sine';
+      g.gain.setValueAtTime(0.3, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.28);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.3);
+    });
+  } catch(_) {}
+}
+
+function beepNext() {
+  try {
+    const ctx = audioCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.value = 660; o.type = 'sine';
+    g.gain.setValueAtTime(0.25, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.2);
+  } catch(_) {}
+}
+
+function beepDone() {
+  try {
+    const ctx = audioCtx();
+    [0, 0.22, 0.44, 0.66].forEach((t, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = [660, 784, 880, 1047][i];
+      o.type = 'sine';
+      g.gain.setValueAtTime(0.28, ctx.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.22);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.25);
+    });
+  } catch(_) {}
+}
+
+// ══════════════════════════════════════════════════════════
+//  Enter key on add form
+// ══════════════════════════════════════════════════════════
+document.getElementById('actName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addActivity();
+});
+document.getElementById('actMins').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addActivity();
+});
+
+// ══════════════════════════════════════════════════════════
+//  Init
+// ══════════════════════════════════════════════════════════
+buildTicks();
+render();
+</script>
+</body>
+</html>
