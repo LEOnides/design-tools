@@ -3,33 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Leaders · Timer</title>
+<title>Timer for design sessions — leonides delgado</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;900&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --font: 'Fira Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --bg:        #EEECEA;
+  --bg:        #E9E7E3;
   --surface:   #FFFFFF;
-  --surface2:  #F4F3EF;
-  --surface3:  #EBEAE6;
+  --surface2:  #EDECEA;   /* más contraste vs surface */
+  --surface3:  #E0DDD9;   /* más contraste vs surface2 */
   --text-1:    #1A1A1A;
-  --text-2:    #5C5C5C;
-  --text-3:    #AAAAAA;
-  --border:    rgba(0,0,0,0.07);
+  --text-2:    #3D3D3D;   /* era #5C5C5C – más oscuro */
+  --text-3:    #787878;   /* era #AAAAAA – mucho más oscuro */
+  --border:    rgba(0,0,0,0.12);  /* era 0.07 – más visible */
   --red:       #E53E3E;
   --green:     #22C55E;
   --amber:     #F59E0B;
   --face-bg:   #FFFFFF;
-  --face-str:  #E8E8E8;
-  --num-col:   #2D2D2D;   /* high contrast clock numbers */
-  --tick-maj:  #9A9A9A;
-  --tick-min:  #D4D4D4;
+  --face-str:  #D8D8D8;
+  --num-col:   #2D2D2D;
+  --tick-maj:  #888888;
+  --tick-min:  #C8C8C8;
   --knob-f:    #FFFFFF;
-  --knob-s:    #DDDDDD;
+  --knob-s:    #CCCCCC;
   --shadow-card: 0 1px 2px rgba(0,0,0,0.04), 0 4px 14px rgba(0,0,0,0.07), 0 12px 32px rgba(0,0,0,0.06);
   --shadow-btn:  0 4px 16px rgba(229,62,62,0.38);
 }
@@ -38,25 +38,27 @@
   :root {
     --bg:       #141416;
     --surface:  #1C1C1E;
-    --surface2: #242426;
-    --surface3: #2A2A2C;
+    --surface2: #282828;   /* más contraste */
+    --surface3: #323232;   /* más contraste */
     --text-1:   #F0EFEA;
-    --text-2:   #888888;
-    --text-3:   #555555;
-    --border:   rgba(255,255,255,0.07);
+    --text-2:   #C0C0C0;   /* era #888888 – más legible */
+    --text-3:   #909090;   /* era #555555 – mucho más legible */
+    --border:   rgba(255,255,255,0.12);
     --face-bg:  #232328;
-    --face-str: #333336;
-    --num-col:  #CCCCCC;
-    --tick-maj: #666668;
-    --tick-min: #3A3A3C;
+    --face-str: #404040;
+    --num-col:  #D8D8D8;
+    --tick-maj: #787878;
+    --tick-min: #444448;
     --knob-f:   #2A2A2E;
-    --knob-s:   #444448;
+    --knob-s:   #505054;
     --shadow-card: 0 1px 2px rgba(0,0,0,0.3), 0 4px 14px rgba(0,0,0,0.25);
   }
 }
 
 body {
   font-family: var(--font);
+  font-size: 16px;          /* base tipográfica */
+  line-height: 1.5;
   background: var(--bg);
   color: var(--text-1);
   min-height: 100vh;
@@ -74,15 +76,45 @@ body {
   gap: 10px;
 }
 
-/* ─── App header ─── */
-.app-hd {
-  text-align: center;
-  padding-bottom: 6px;
-  font-size: 10px;
+/* ─── Logo ─── */
+.app-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 4px;
+}
+
+.logo-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #0D0F10;
+  padding: 8px 14px 9px;
+  border-radius: 3px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.lb-white {
+  font-size: 20px;
+  font-weight: 400;
+  color: #FAFAFA;
+  font-family: var(--font);
+}
+
+.lb-red {
+  font-size: 20px;
+  font-weight: 900;   /* black — igual que en linkedin-formatter */
+  color: #FF0033;     /* rojo exacto del sistema de marca */
+  font-family: var(--font);
+}
+
+.logo-tagline {
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-3);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* ─── Cards ─── */
@@ -128,14 +160,14 @@ body {
 }
 
 .act-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--red);
-  min-height: 14px;
+  min-height: 16px;
   text-align: center;
-  max-width: 140px;
+  max-width: 160px;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -156,14 +188,14 @@ body {
 
 .t-status {
   margin-top: 5px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-3);
   transition: color 0.2s;
   text-align: center;
-  min-height: 14px;
+  min-height: 16px;
 }
 
 /* ─── Mode toggle ─── */
@@ -181,11 +213,11 @@ body {
   padding: 7px 12px;
   border-radius: 100px;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   border: none;
   background: none;
-  color: var(--text-3);
+  color: var(--text-2);
   cursor: pointer;
   transition: all 0.15s;
   white-space: nowrap;
@@ -214,9 +246,9 @@ body {
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 100px;
-  padding: 5px 13px;
+  padding: 6px 14px;
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-2);
   cursor: pointer;
@@ -233,8 +265,8 @@ body {
   gap: 7px;
 }
 .row label, .row .unit {
-  font-size: 12px;
-  color: var(--text-3);
+  font-size: 14px;
+  color: var(--text-2);
   white-space: nowrap;
 }
 input[type="number"] {
@@ -273,9 +305,9 @@ input[type="text"]:focus { border-color: var(--red); }
   background: var(--surface2);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px 12px;
+  padding: 7px 14px;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-2);
   cursor: pointer;
@@ -346,8 +378,8 @@ input[type="text"]:focus { border-color: var(--red); }
 .seq-empty {
   text-align: center;
   padding: 20px 0 8px;
-  font-size: 13px;
-  color: var(--text-3);
+  font-size: 14px;
+  color: var(--text-2);
 }
 
 .seq-item {
@@ -388,7 +420,7 @@ input[type="text"]:focus { border-color: var(--red); }
 
 .seq-body { flex: 1; min-width: 0; }
 .seq-name {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: var(--text-1);
   white-space: nowrap;
@@ -397,9 +429,9 @@ input[type="text"]:focus { border-color: var(--red); }
 }
 .seq-item.done .seq-name { text-decoration: line-through; color: var(--text-3); }
 .seq-meta {
-  font-size: 11px;
-  color: var(--text-3);
-  margin-top: 1px;
+  font-size: 13px;
+  color: var(--text-2);
+  margin-top: 2px;
 }
 .seq-item.active .seq-meta { color: var(--red); font-weight: 500; }
 
@@ -422,8 +454,8 @@ input[type="text"]:focus { border-color: var(--red); }
   margin-top: 2px;
 }
 .seq-total {
-  font-size: 12px;
-  color: var(--text-3);
+  font-size: 13px;
+  color: var(--text-2);
 }
 
 .seq-controls {
@@ -437,9 +469,9 @@ input[type="text"]:focus { border-color: var(--red); }
   border: 1px solid var(--border);
   background: var(--surface2);
   border-radius: 100px;
-  padding: 7px 16px;
+  padding: 8px 18px;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   color: var(--text-2);
@@ -474,15 +506,15 @@ input[type="text"]:focus { border-color: var(--red); }
   margin-bottom: 12px;
 }
 .log-head h2 {
-  font-size: 10px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--text-3); font-family: var(--font);
+  color: var(--text-2); font-family: var(--font);
 }
-.log-sum { font-size: 10px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.log-sum { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; }
 
 .log-empty {
   text-align: center; padding: 14px 0 6px;
-  font-size: 12px; color: var(--text-3);
+  font-size: 14px; color: var(--text-2);
 }
 
 .log-list { display: flex; flex-direction: column; gap: 5px; }
@@ -505,8 +537,8 @@ input[type="text"]:focus { border-color: var(--red); }
 .log-dot.stopped   { background: var(--amber); }
 
 .log-body { flex: 1; }
-.log-dur  { font-size: 13px; font-weight: 500; color: var(--text-1); font-variant-numeric: tabular-nums; }
-.log-meta { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+.log-dur  { font-size: 14px; font-weight: 500; color: var(--text-1); font-variant-numeric: tabular-nums; }
+.log-meta { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 
 .log-del {
   background: none; border: none;
@@ -534,7 +566,12 @@ input[type="text"]:focus { border-color: var(--red); }
 </head>
 <body>
 <div class="app">
-  <div class="app-hd">Design Leaders · Timer</div>
+  <div class="app-logo">
+    <div class="logo-badge">
+      <span class="lb-white">leonides</span><span class="lb-red">delgado</span>
+    </div>
+    <div class="logo-tagline">Timer for design sessions</div>
+  </div>
 
   <!-- ── Timer face (shared) ── -->
   <div class="card t-card">
